@@ -7,34 +7,34 @@ using Services.Teachers;
 
 int length = 10;
 
-// StudentService service = new StudentService();
+StudentService service = new StudentService();
 
 
-// for (int i = 3; i < length; i++)
-// {
-//     Console.WriteLine($"\n--- STUDENT {i + 1} ---");
+for (int i = 3; i < length; i++)
+{
+    Console.WriteLine($"\n--- STUDENT {i + 1} ---");
     
-//     Student student = service.GetStudentFormUser();
+    Student student = service.GetStudentFormUser();
     
-//     if (student != null)
-//     {
-//         service.CreateStudent(student);
-//         Console.WriteLine($"STUDENT {i + 1} added!");
-//     }
-//     else
-//     {
-//         Console.WriteLine($"Error! Student {i + 1} don't added.");
-//         i--; 
-//     }
-// }
+    if (student != null)
+    {
+        service.CreateStudent(student);
+        Console.WriteLine($"STUDENT {i + 1} added!");
+    }
+    else
+    {
+        Console.WriteLine($"Error! Student {i + 1} don't added.");
+        i--; 
+    }
+}
 
 
-// Console.WriteLine("\n\n=== ВСЕ СТУДЕНТЫ ===");
-// Student[] allStudents = service.GetAllStudents();
-// foreach (var student in allStudents)
-// {
-//     service.PrintStudentInfo(student);
-// }
+Console.WriteLine("\n\n=== ALL STUDENTS ===");
+Student[] allStudents = service.GetAllStudents();
+foreach (var student in allStudents)
+{
+    service.PrintStudentInfo(student);
+}
 
 TeacherService teacherService = new TeacherService();
 
