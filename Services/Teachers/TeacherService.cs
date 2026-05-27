@@ -39,6 +39,9 @@ public class TeacherService : ITeacherService
         Console.Write("LastName: ");
         string lastName = Console.ReadLine();
 
+        Console.Write("Subject: ");
+        string subject = Console.ReadLine();        
+
         Console.Write("Rank: ");
         double rank = Convert.ToDouble(Console.ReadLine());
 
@@ -49,6 +52,7 @@ public class TeacherService : ITeacherService
            Id = id,
            FirstName = firstName,
            LastName = lastName,
+           Subject = subject,
            Rank = rank 
         };
     }
@@ -67,6 +71,7 @@ public class TeacherService : ITeacherService
                 ID: {teacher.Id},
                 FirstName: {teacher.FirstName},
                 LastName: {teacher.LastName},
+                Subject : {teacher.Subject}
                 Rank: {teacher.Rank}
             """
         );

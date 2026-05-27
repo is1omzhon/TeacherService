@@ -49,7 +49,6 @@ Bu loyiha **Student** va **Teacher** ma'lumotlarini boshqarish uchun yozilgan od
 ---
 
 ## 🚀 Ishga tushirish
-
 ![1 Programma ishlashi](/assets/1.gif)
 
 
