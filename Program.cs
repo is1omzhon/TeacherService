@@ -28,13 +28,15 @@ for (int i = 3; i < length; i++)
     }
 }
 
-
 Console.WriteLine("\n\n=== ALL STUDENTS ===");
 Student[] allStudents = service.GetAllStudents();
 foreach (var student in allStudents)
 {
     service.PrintStudentInfo(student);
 }
+
+Console.WriteLine("==========================================");
+
 
 TeacherService teacherService = new TeacherService();
 
