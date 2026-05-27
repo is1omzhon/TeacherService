@@ -4,5 +4,8 @@ namespace Services.Students;
 
 public interface IStudentService
 {
-    string [] GetAllStudents();
+    Student GetStudentFormUser();
+    void CreateStudent(Student student);
+    Student [] GetAllStudents();
+    void PrintStudentInfo(Student student);
 }
