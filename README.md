@@ -10,46 +10,39 @@ Bu loyiha **Student** va **Teacher** ma'lumotlarini boshqarish uchun yozilgan od
 ## 🧱 Texnologiyalar
 
 - C# .NET 6.0
-- Console Applicatio
+- Console Application
 ---
 
 ## 📁 Loyiha tuzilishi
 
 ## 🧩 Modellar
 
-### Student
-
-| Field       | Type     | Description     |
-|-------------|----------|-----------------|
-| Id          | int      | Unique ID       |
-| FirstName   | string   | Ismi            |
-| LastName    | string   | Familiyasi      |
-| Address     | string   | Manzili         |
-| GPA         | double   | O'rtacha ball   |
-
-### Teacher
-
-| Field       | Type     | Description     |
-|-------------|----------|-----------------|
-| Id          | int      | Unique ID       |
-| FirstName   | string   | Ismi            |
-| LastName    | string   | Familiyasi      |
-| Subject     | string   | Fani            |
-| Rank        | double   | O'rtacha ball   |
-
----
-
 ## ✅ Funksiyalar
 
-| Student          | Teacher          |
-|------------------|------------------|
-| ➕ Qo'shish       | ➕ Qo'shish       |
-| 📋 Ko'rish       | 📋 Ko'rish       |
+| Student | Teacher |
+|---------|---------|
+| ➕ Create | ➕ Create |
+| 📋 Read (Show all) | 📋 Read (Show all) |
+| ✏️ Update | ✏️ Update |
+| 🗑️ Delete | 🗑️ Delete |
+| 🔍 Find by ID | 🔍 Find by ID |
 
 ---
 
 ## 🚀 Ishga tushirish
-![1 Programma ishlashi](/assets/1.gif)
+
+---
+---
+
+## READ
+![1 Programma ishlashi](/assets/read.gif)
+
+## CREATE
+![2 Programma ishlashi](/assets/create.gif)
+
+## UPDATE-DELETE
+![3 Programma ishlashi](/assets/updateDelete.gif)
+
 
 
 
