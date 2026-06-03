@@ -31,7 +31,7 @@ Bu loyiha **Student** va **Teacher** ma'lumotlarini boshqarish uchun yozilgan od
 
 ## 🚀 Ishga tushirish
 
----
+--- 
 ---
 
 ## READ

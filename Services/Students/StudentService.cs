@@ -1,59 +1,61 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Models.Students;
 
 namespace Services.Students;
 
 public class StudentService : IStudentService
 {
-    private Student[] students = new Student[5];
-    private int count = 0;
+    private List<Student> students;
+    private const int MaxCapacity = 30;
 
     public StudentService()
     {
-        students[0] = new Student
+        students = new List<Student>(30)
         {
+          new Student
+          {
             ID = Guid.NewGuid(),
             FirstName = "Ali",
             LastName = "Aliyev",
             Address = "Moskva",
             GPA = 4.5
-        };
 
-        students[1] = new Student
-        {
-            ID = Guid.Parse("123e4567-e89b-12d3-a456-426614174000"),
-            FirstName = "Vali",
-            LastName = "Valiyev",
-            Address = "Petr",
-            GPA = 4.4
-        };
+          },
+          new Student
+          {
+            ID = Guid.NewGuid(),
+            FirstName = "Ali",
+            LastName = "Aliyev",
+            Address = "Moskva",
+            GPA = 4.5
 
-        students[2] = new Student
-        {
-            ID = Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
+          },
+
+          new Student
+          {
+             ID = Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
             FirstName = "Javid",
             LastName = "Roziev",
             Address = "Baku",
             GPA = 4.7
-        };
 
-        count = 3;
+          }
+
+        };
     }
 
     public void CreateStudent(Student student)
     {
-        if (count > this.students.Length - 1)
+        if (students.Count >= MaxCapacity)
         {
-            Console.WriteLine("Database is full");
+            Console.WriteLine("Database is full!");
             return;
         }
-        this.students[count] = student;
-        count++;
-    }
 
-    public Student[] GetAllStudents()
-    {
-        return this.students;
+        students.Add(student);
+        Console.WriteLine("Student successfully created!");
     }
 
     public void PrintStudentInfo(Student student)
@@ -85,11 +87,11 @@ public class StudentService : IStudentService
 
         if (Guid.TryParse(input, out Guid id))
         {
-            Console.WriteLine($"✅ Valid GUID: {id}");
+            Console.WriteLine($"Valid GUID: {id}");
         }
         else
         {
-            Console.WriteLine("❌ Invalid GUID format!");
+            Console.WriteLine("Invalid GUID format!");
         }
 
         Console.Write("First Name: ");
@@ -124,18 +126,8 @@ public class StudentService : IStudentService
         };
     }
 
-    public Student GetStudentById(Guid studentId)
-    {
-        foreach (Student student in this.students)
-        {
-            if (student?.ID == studentId)
-            {
-                return student;
-            }
-        }
-
-        return null;
-    }
+    public Student GetStudentById(Guid studentId) =>
+        this.students.FirstOrDefault(student => student.ID == studentId);
 
     public void UpdateStudent(Student student)
     {
@@ -145,32 +137,38 @@ public class StudentService : IStudentService
             return;
         }
 
-        foreach(Student storageStudent in this.students)
-        {
-            if (storageStudent.ID== student.ID)
-            {
-                storageStudent.FirstName = student.FirstName;
-                storageStudent.LastName = student.LastName;
-                storageStudent.Address = student.Address;
-                storageStudent.GPA = student.GPA;
-                Console.WriteLine("Student is succesfully updated!!!");
+        Student maybeStudent =
+            this.students.FirstOrDefault(student => student.ID == student.ID);
 
-                return;
-            }
+        if (maybeStudent is null)
+        {
+            Console.WriteLine("Student is not found!!!");
+            return;
         }
 
-        Console.WriteLine("Student is not found!!!");
+        maybeStudent.FirstName = student.FirstName;
+        maybeStudent.LastName = student.LastName;
+        maybeStudent.Address = student.Address;
+        maybeStudent.GPA = student.GPA;
+
+        Console.WriteLine("Student is succesfully updated!!!");
     }
 
     public void DeleteStudentById(Guid studentId)
     {
-        for (int i = 0; i < this.students.Length; i++)
+        Student maybeStudent =
+            this.students.FirstOrDefault(student => student.ID == studentId);
+
+        if (maybeStudent is null)
         {
-            if (this.students[i]?.ID == studentId)
-            {
-                this.students[i] = null;
-                Console.WriteLine("Student succesfully deleted!!");
-            }
+            Console.WriteLine("Student is not found!");
+            return;
         }
+        this.students.Remove(maybeStudent);
     }
-}
+
+    public void InsertStudent(Student student) =>
+        this.students.Add(student);
+
+    List<Student> IStudentService.GetAllStudents() => this.students;
+};

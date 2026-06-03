@@ -95,7 +95,7 @@ do
 
         case "2":  
             {
-                Console.WriteLine("\nTeacher bo'limi \n\t1. CREATE (Qo'shish) \n\t2. READ (Ko'rish)  \n\t3. UPDATE (Yangilash) 4. DELETE (O'chirish) ");
+                Console.WriteLine("\nTeacher bo'limi \n\t1. CREATE (Qo'shish) \n\t2. READ (Ko'rish)  \n\t3. UPDATE (Yangilash) \n\t4. DELETE (O'chirish)");
                 Console.Write("Tanlang: ");
 
                 string choiceFunction = Console.ReadLine();

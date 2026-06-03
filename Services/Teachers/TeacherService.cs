@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Models.Teachers;
 
 namespace Services.Teachers;
@@ -6,26 +8,21 @@ namespace Services.Teachers;
 public class TeacherService : ITeacherService
 {
 
-    private Teacher[] teachers = new Teacher[10];
-    private int count = 0;
+    private List<Teacher> teachers;
+    private const int MaxCapacity = 30;
 
     public void CreateTeacher(Teacher teacher)
     {
-        if (count > this.teachers.Length - 1)
+        if (teachers.Count >= MaxCapacity)
         {
-            Console.WriteLine("Database is full");
+            Console.WriteLine("Database is full!");
             return;
         }
-        this.teachers[count] = teacher;
-        count++;
+
+        teachers.Add(teacher);
+        Console.WriteLine("Teacher successfully created!");
 
     }
-
-    public Teacher[] GetAllTeachers()
-    {
-        return this.teachers;
-    }
-
     public Teacher GetTeachersFromUser()
     {
         Console.WriteLine("=== NEW Teacher ===\n");
@@ -125,13 +122,19 @@ public class TeacherService : ITeacherService
 
     public void DeleteTeacherById(Guid teacherId)
     {
-        for (int i = 0; i < this.teachers.Length; i++)
+        Teacher maybeTeacher =
+            this.teachers.FirstOrDefault(teacher => teacher.Id == teacherId);
+
+        if (maybeTeacher is null)
         {
-            if (this.teachers[i]?.Id == teacherId)
-            {
-                this.teachers[i] = null;
-                Console.WriteLine("Student succesfully deleted!!");
-            }
+            Console.WriteLine("Student is not found!");
+            return;
         }
+        this.teachers.Remove(maybeTeacher);
     }
+
+    public void InsertTeacher(Teacher teacher) =>
+        this.teachers.Add(teacher);
+
+    List<Teacher> ITeacherService.GetAllTeachers() => this.teachers;
 }

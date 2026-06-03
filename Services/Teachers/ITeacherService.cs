@@ -1,22 +1,19 @@
 using System;
+using System.Collections.Generic;
 using Models.Teachers;
 
 namespace Services.Teachers;
 
 public interface ITeacherService
 {
+
+    void InsertTeacher(Teacher teacher);
     Teacher GetTeachersFromUser();
     void CreateTeacher(Teacher teacher);
-    Teacher [] GetAllTeachers();
+    List<Teacher> GetAllTeachers();
     void TeacherPrintInfo(Teacher teacher);
-
-    // GET
     Teacher GetTeacherById(Guid teacherId);
-   
-   // UPDATE 
     void UpdateTeacher (Teacher student);
-
-    // DELETE 
     void DeleteTeacherById(Guid teacherId);
 
 }
