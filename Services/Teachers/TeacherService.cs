@@ -136,5 +136,8 @@ public class TeacherService : ITeacherService
     public void InsertTeacher(Teacher teacher) =>
         this.teachers.Add(teacher);
 
-    List<Teacher> ITeacherService.GetAllTeachers() => this.teachers;
+    public List<Teacher> GetAllTeachers()
+    {
+        return teachers.ToList();
+    }
 }

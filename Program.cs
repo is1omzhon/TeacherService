@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection.Metadata;
 using Models.Students;
 using Models.Teachers;
@@ -20,7 +21,7 @@ do
 
     switch (userInput)
     {
-        case "1": 
+        case "1":
             {
                 Console.WriteLine("\nStudent bo'limi \n\t1. CREATE (Qo'shish) \n\t2. READ (Ko'rish)  \n\t3. UPDATE (Yangilash)  \n\t4. DELETE (O'chirish) ");
                 Console.Write("Tanlang: ");
@@ -38,13 +39,21 @@ do
                         break;
 
                     case "2":
-                        Student[] allStudents = studentService.GetAllStudents();
-                        foreach (var student in allStudents)
+                        List<Student> allStudents = studentService.GetAllStudents();
+                        if (allStudents.Count == 0)
                         {
-                            if (student != null)
+                            Console.WriteLine("📭 No students found!");
+                        }
+                        else
+                        {
+                            foreach (var student in allStudents)
                             {
-                                studentService.PrintStudentInfo(student);
+                                if (student != null)
+                                {
+                                    studentService.PrintStudentInfo(student);
+                                }
                             }
+                            Console.WriteLine($"\n📌 Total: {allStudents.Count} students");
                         }
                         break;
 
@@ -85,6 +94,12 @@ do
                             Console.WriteLine("Invalid GUID format!");
                         }
                         break;
+                    case "5":
+                        {
+                            studentService.GetStudentCountByClass();
+                            break;
+                        }
+
 
                     default:
                         Console.WriteLine(" Bunday amal mavjud emas!");
@@ -93,7 +108,7 @@ do
             }
             break;
 
-        case "2":  
+        case "2":
             {
                 Console.WriteLine("\nTeacher bo'limi \n\t1. CREATE (Qo'shish) \n\t2. READ (Ko'rish)  \n\t3. UPDATE (Yangilash) \n\t4. DELETE (O'chirish)");
                 Console.Write("Tanlang: ");
@@ -161,7 +176,7 @@ do
 
                     default:
                         Console.WriteLine("Bunday amal mavjud emas!");
-                    break;
+                        break;
                 }
             }
             break;
@@ -174,3 +189,4 @@ do
     userChoice = Console.ReadLine();
 
 } while (userChoice.ToLower() == "ha");
+

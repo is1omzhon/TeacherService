@@ -9,4 +9,5 @@ public class Student
     public string LastName {get; set;}  
     public string Address {get; set;}  
     public double GPA {get; set;}
+    public string ClassRoom{get; set;}
 } 
