@@ -31,3 +31,4 @@ public class TeacherRepository : GenericRepository<Teacher>, ITeacherRepository
         return Delete(teacher);
     }
 }
+
