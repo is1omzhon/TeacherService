@@ -2,227 +2,179 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Models.Students;
+using TeacherService.Repositories;
 
 namespace Services.Students;
 
 public class StudentService : IStudentService
 {
-    private Dictionary<Guid, Student> students;  
-    private const int MaxCapacity = 30;
-
-    public StudentService()
+    private readonly IStudentRepository _studentRepository;
+    
+    public StudentService(IStudentRepository studentRepository)
     {
-        students = new Dictionary<Guid, Student>();
-        
-        var student1 = new Student
-        {
-            ID = Guid.NewGuid(),
-            FirstName = "Ali",
-            LastName = "Aliyev",
-            Address = "Moskva",
-            GPA = 4.5,
-            ClassRoom = "9 A"           
-        };
-        students.Add(student1.ID, student1);
-        
-        var student2 = new Student
-        {
-            ID = Guid.NewGuid(),
-            FirstName = "Vali",
-            LastName = "Valiyev",
-            Address = "Toshkent",
-            GPA = 4.4,
-            ClassRoom = "10 B"
-        };
-        students.Add(student2.ID, student2);
-        
-        var student3 = new Student
-        {
-            ID = Guid.Parse("550e8400-e29b-41d4-a716-446655440000"),
-            FirstName = "Javid",
-            LastName = "Roziev",
-            Address = "Baku",
-            GPA = 4.7,
-            ClassRoom = "11 A"
-        };
-        students.Add(student3.ID, student3);
+        _studentRepository = studentRepository;
     }
-
+    
+    // 1. Student yaratish
     public void CreateStudent(Student student)
     {
-        if (students.Count >= MaxCapacity)
+        if (student == null)
         {
-            Console.WriteLine(" Database is full!");
-            return;
+            throw new ArgumentNullException(nameof(student), "Student null bo'lishi mumkin emas");
         }
         
-        if (students.ContainsKey(student.ID))
+        if (string.IsNullOrWhiteSpace(student.FullName))
         {
-            Console.WriteLine("Student with this ID already exists!");
-            return;
+            throw new ArgumentException("Student ismi bo'sh bo'lishi mumkin emas");
         }
         
-        students.Add(student.ID, student);  
-        Console.WriteLine("Student successfully created!");
+        _studentRepository.CreateStudent(student);
     }
-
+    
+    // 2. Barcha studentlarni olish
     public List<Student> GetAllStudents()
     {
-        return students.Values.ToList();  
+        return _studentRepository.GetAllStudents();
     }
-
+    
+    // 3. ID bo'yicha student olish
     public Student GetStudentById(Guid studentId)
     {
-        if (students.TryGetValue(studentId, out Student student))
-            return student;
+        if (studentId == Guid.Empty)
+        {
+            throw new ArgumentException("Student ID noto'g'ri");
+        }
         
-        return null;
+        return _studentRepository.GetStudentById(studentId);
     }
-
+    
+    // 4. Studentni yangilash
     public void UpdateStudent(Student student)
     {
-        if (student is null)
+        if (student == null)
         {
-            Console.WriteLine("Student is null!");
-            return;
+            throw new ArgumentNullException(nameof(student));
         }
         
-        if (!students.ContainsKey(student.ID))
+        var existingStudent = _studentRepository.GetStudentById(student.Id);
+        if (existingStudent == null)
         {
-            Console.WriteLine("Student not found!");
-            return;
+            throw new Exception($"ID {student.Id} bo'lgan student topilmadi");
         }
         
-        students[student.ID] = student;  
-        Console.WriteLine("Student successfully updated!");
+        _studentRepository.UpdateStudent(student);
     }
-
+    
+    // 5. ID bo'yicha student o'chirish
     public void DeleteStudentById(Guid studentId)
     {
-        if (students.Remove(studentId))
+        if (studentId == Guid.Empty)
         {
-            Console.WriteLine(" Student successfully deleted!");
+            throw new ArgumentException("Student ID noto'g'ri");
         }
-        else
+        
+        var student = _studentRepository.GetStudentById(studentId);
+        if (student == null)
         {
-            Console.WriteLine("Student not found!");
+            throw new Exception($"ID {studentId} bo'lgan student topilmadi");
         }
+        
+        _studentRepository.DeleteStudent(student);
     }
-
+    
+    // 6. Foydalanuvchidan student ma'lumotlarini olish
+    public Student GetStudentFormUser()
+    {
+        Console.WriteLine("=== Yangi student qo'shish ===");
+        
+        Console.Write("Ism familiya: ");
+        string? fullName = Console.ReadLine();
+        
+        Console.Write("Sinf (1-11): ");
+        if (!int.TryParse(Console.ReadLine(), out int grade))
+        {
+            grade = 1;
+        }
+        
+        Console.Write("Yoshi: ");
+        if (!int.TryParse(Console.ReadLine(), out int age))
+        {
+            age = 7;
+        }
+        
+        var student = new Student
+        {
+            Id = Guid.NewGuid(),
+            FullName = fullName ?? "Noma'lum",
+            Grade = grade,
+            Age = age
+        };
+        
+        return student;
+    }
+    
+    // 7. Nom bo'yicha studentlarni qidirish (pagination bilan)
     public List<Student> GetStudentsByName(string name, int pageNumber, int pageSize)
     {
-        if (string.IsNullOrEmpty(name))
-            return new List<Student>();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Ism bo'sh bo'lishi mumkin emas");
+        }
         
-        return students.Values
-            .Where(s => s.FirstName.Contains(name, StringComparison.OrdinalIgnoreCase) || 
-                        s.LastName.Contains(name, StringComparison.OrdinalIgnoreCase))
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+        
+        var allStudents = _studentRepository.GetAllStudents();
+        
+        var filteredStudents = allStudents
+            .Where(s => s.FullName.Contains(name, StringComparison.OrdinalIgnoreCase))
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToList();
-    }
-
-    public Student GetStudentFormUser()
-    {
-        Console.WriteLine("=== NEW STUDENT ===\n");
-
-        Console.Write("Enter GUID (or press Enter for auto-generate): ");
-        string input = Console.ReadLine();
         
-        Guid id;
-        if (string.IsNullOrEmpty(input))
-        {
-            id = Guid.NewGuid();
-            Console.WriteLine($"Auto-generated GUID: {id}");
-        }
-        else if (!Guid.TryParse(input, out id))
-        {
-            Console.WriteLine("Invalid GUID format!");
-            return null;
-        }
-
-        Console.Write("First Name: ");
-        string firstName = Console.ReadLine();
-        if (string.IsNullOrEmpty(firstName))
-        {
-            Console.WriteLine("First name cannot be empty!");
-            return null;
-        }
-
-        Console.Write("Last Name: ");
-        string lastName = Console.ReadLine();
-        if (string.IsNullOrEmpty(lastName))
-        {
-            Console.WriteLine("Last name cannot be empty!");
-            return null;
-        }
-
-        Console.Write("Address: ");
-        string address = Console.ReadLine();
-
-        Console.Write("GPA: ");
-        if (!double.TryParse(Console.ReadLine(), out double gpa))
-        {
-            Console.WriteLine("Invalid GPA format!");
-            return null;
-        }
-        
-        Console.Write("Class Room : ");
-        string classRoom = Console.ReadLine();
-
-        return new Student
-        {
-            ID = id,
-            FirstName = firstName,
-            LastName = lastName,
-            Address = address,
-            GPA = gpa,
-            ClassRoom = classRoom
-        };
+        return filteredStudents;
     }
-
+    
+    // 8. Student ma'lumotlarini ekranga chiqarish
     public void PrintStudentInfo(Student student)
     {
-        if (student is null)
+        if (student == null)
         {
-            Console.WriteLine("Student is null");
+            Console.WriteLine("Student ma'lumotlari topilmadi");
             return;
         }
         
-        Console.WriteLine("====================");
-        Console.WriteLine($"""
-            Student Info:
-                Student ID : {student.ID}
-                First Name: {student.FirstName}
-                Last Name: {student.LastName}
-                Address: {student.Address}
-                GPA: {student.GPA}
-                Class Room: {student.ClassRoom}
-            """);
+        Console.WriteLine("═══════════════════════════════════");
+        Console.WriteLine($"🆔 ID:        {student.Id}");
+        Console.WriteLine($"👤 Ism:       {student.FullName}");
+        Console.WriteLine($"📚 Sinf:      {student.Grade}-sinf");
+        Console.WriteLine($"🎂 Yoshi:     {student.Age}");
+        Console.WriteLine("═══════════════════════════════════");
     }
-
+    
+    // 9. Studentlar sonini sinf bo'yicha chiqarish
     public void GetStudentCountByClass()
     {
-        var groups = students.Values
-            .Where(s => !string.IsNullOrEmpty(s.ClassRoom))
-            .GroupBy(s => s.ClassRoom)
-            .OrderBy(g => g.Key);
+        var allStudents = _studentRepository.GetAllStudents();
         
-        Console.WriteLine("\nSTUDENT COUNT BY CLASS:");
-        Console.WriteLine("═══════════════════════════");
+        var studentsByGrade = allStudents
+            .GroupBy(s => s.Grade)
+            .OrderBy(g => g.Key)
+            .ToList();
         
-        if (!groups.Any())
+        Console.WriteLine("\n=== Sinf bo'yicha o'quvchilar soni ===");
+        
+        if (studentsByGrade.Count == 0)
         {
-            Console.WriteLine("No students with class room assigned!");
+            Console.WriteLine("Hech qanday student topilmadi");
             return;
         }
         
-        foreach (var group in groups)
+        foreach (var group in studentsByGrade)
         {
-            Console.WriteLine($" {group.Key}: {group.Count()} ta o'quvchi");
+            Console.WriteLine($"{group.Key}-sinf: {group.Count()} ta o'quvchi");
         }
         
-        Console.WriteLine("═══════════════════════════");
-        Console.WriteLine($"Jami: {students.Count} ta o'quvchi");
+        Console.WriteLine($"\nJami studentlar: {allStudents.Count} ta");
     }
 }
