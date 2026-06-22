@@ -36,34 +36,34 @@ Loyiha **OOP tamoyillari**, **Repository pattern**, **Exception Handling** va **
 #### │
 #### ├── 📁 Repositories/
 #### │   ├── 📄 IGenericRepository.cs      # Generic interfeys
-####│   ├── 📄 GenericRepository.cs       # Generic implementatsiya
-│   ├── 📄 IStudentRepository.cs
-│   ├── 📄 ITeacherRepository.cs
-│   ├── 📄 StudentRepository.cs
-│   └── 📄 TeacherRepository.cs
-│
-├── 📁 Services/
-│   ├── 📁 Students/
-│   │   ├── 📄 IStudentService.cs
-│   │   └── 📄 StudentService.cs
-│   │
-│   └── 📁 Teachers/
-│       ├── 📄 ITeacherService.cs
-│       └── 📄 TeacherService.cs
-│
-├── 📁 Exceptions/
-│   ├── 📄 ValidationException.cs     # Ma'lumot xatoliklari
-│   └── 📄 NotFoundException.cs       # Topilmadi xatoligi
-│
-├── 📁 Utils/
-│   └── 📄 FileStorage.cs             # JSON fayl bilan ishlash
-│
-├── 📁 Data/
-│   ├── 📄 students.json              # Student ma'lumotlari
-│   └── 📄 teachers.json              # Teacher ma'lumotlari
-│
-├── 📄 Program.cs
-└── 📄 README.md
+#### │   ├── 📄 GenericRepository.cs       # Generic implementatsiya
+#### │   ├── 📄 IStudentRepository.cs
+#### │   ├── 📄 ITeacherRepository.cs
+#### │   ├── 📄 StudentRepository.cs
+#### │   └── 📄 TeacherRepository.cs
+#### │
+#### ├── 📁 Services/
+#### │   ├── 📁 Students/
+#### │   │   ├── 📄 IStudentService.cs
+#### │   │   └── 📄 StudentService.cs
+#### │   │
+#### │   └── 📁 Teachers/
+#### │       ├── 📄 ITeacherService.cs
+#### │       └── 📄 TeacherService.cs
+#### │
+#### ├── 📁 Exceptions/
+#### │   ├── 📄 ValidationException.cs     
+#### │   └── 📄 NotFoundException.cs       
+#### │
+#### ├── 📁 Utils/
+#### │   └── 📄 FileStorage.cs             
+#### │
+#### ├── 📁 Data/
+#### │   ├── 📄 students.json              
+#### │   └── 📄 teachers.json              
+#### │
+#### ├── 📄 Program.cs
+#### └── 📄 README.md
 
 
 ---
