@@ -122,9 +122,6 @@ Loyiha **OOP tamoyillari**, **Repository pattern**, **Exception Handling** va **
 
 ### 1. Repository ni klonlash
 
-```bash
-git clone https://github.com/yourusername/TeacherService.git
-cd TeacherService
 
 ## READ
 ![1 Programma ishlashi](/assets/read.gif)
@@ -134,6 +131,8 @@ cd TeacherService
 
 ## UPDATE-DELETE
 ![3 Programma ishlashi](/assets/updateDelete.gif)
+
+s
 
 
 
