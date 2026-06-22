@@ -2,18 +2,21 @@ using System;
 using System.Collections.Generic;
 using Models.Teachers;
 
-namespace Services.Teachers;
-
-public interface ITeacherService
+namespace TeacherServiceApp.Services.Teachers
 {
+    public interface ITeacherService
+    {
+        // CRUD
+        void CreateTeacher(Teacher teacher);
+        List<Teacher> GetAllTeachers();
+        Teacher GetTeacherById(Guid teacherId);
+        void UpdateTeacher(Teacher teacher);
+        void DeleteTeacherById(Guid teacherId);
 
-    void InsertTeacher(Teacher teacher);
-    Teacher GetTeachersFromUser();
-    void CreateTeacher(Teacher teacher);
-    List<Teacher> GetAllTeachers();
-    void TeacherPrintInfo(Teacher teacher);
-    Teacher GetTeacherById(Guid teacherId);
-    void UpdateTeacher (Teacher student);
-    void DeleteTeacherById(Guid teacherId);
+        // User Input
+        Teacher GetTeachersFromUser();
 
+        // Print
+        void TeacherPrintInfo(Teacher teacher);
+    }
 }

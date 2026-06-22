@@ -4,15 +4,18 @@ using System.Linq;
 using Models.Students; 
 using Models.Teachers;
 using TeacherService.Repositories;                  
-using Services.Students;
-using Services.Teachers;
+using TeacherServiceApp.Services.Students;
+using TeacherServiceApp.Services.Teachers;
+using TeacherService.Exceptions;
+
+using TeacherServiceApp.Services.Teachers;
 
 // ========== DEPENDENCY INJECTION ==========
 StudentRepository _studentRepo = new StudentRepository();
 TeacherRepository _teacherRepo = new TeacherRepository();
 
 StudentService _studentService = new StudentService(_studentRepo);
-TeacherServicee _teacherService = new TeacherServicee();
+TeacherService _teacherService = new TeacherService(_teacherRepo);
 
 while (true)
 {
@@ -35,7 +38,9 @@ while (true)
     }
 }
 
+// ============================================================
 // ========== STUDENT MENU ==========
+// ============================================================
 void StudentMenu()
 {
     Console.Clear();
@@ -55,72 +60,138 @@ void StudentMenu()
         case "2": ReadStudents(); break;
         case "3": UpdateStudent(); break;
         case "4": DeleteStudent(); break;
-        case "5": _studentService.GetStudentCountByClass(); Wait(); break;
+        case "5": GetStudentCountByClass(); break;
         case "6": return;
         default: ShowError("Noto'g'ri tanlov!"); break;
     }
 }
 
+// ========== STUDENT CREATE ==========
 void CreateStudent()
 {
-    var student = _studentService.GetStudentFormUser();
-    if (student != null)
+    try
+    {
+        var student = _studentService.GetStudentFormUser();
         _studentService.CreateStudent(student);
+        Console.WriteLine("✅ Student created successfully!");
+    }
+    catch (ValidationException ex)
+    {
+        ShowError($"Validation Error: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Unexpected Error: {ex.Message}");
+    }
     Wait();
 }
 
+// ========== STUDENT READ ==========
 void ReadStudents()
 {
-    var students = _studentService.GetAllStudents();
-    if (!students.Any())
+    try
     {
-        Console.WriteLine("📭 No students found!");
-        Wait();
-        return;
-    }
+        var students = _studentService.GetAllStudents();
+        if (!students.Any())
+        {
+            Console.WriteLine("📭 No students found!");
+            Wait();
+            return;
+        }
 
-    students.ForEach(_studentService.PrintStudentInfo);
-    Console.WriteLine($"\n📌 Total: {students.Count} students");
+        students.ForEach(_studentService.PrintStudentInfo);
+        Console.WriteLine($"\n📌 Total: {students.Count} students");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Error: {ex.Message}");
+    }
     Wait();
 }
 
+// ========== STUDENT UPDATE ==========
 void UpdateStudent()
 {
-    Console.Write("Enter Student ID: ");
-    if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+    try
     {
-        ShowError("Invalid GUID!");
-        return;
-    }
+        Console.Write("Enter Student ID: ");
+        if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+        {
+            ShowError("Invalid GUID format!");
+            return;
+        }
 
-    var existing = _studentService.GetStudentById(id);
-    if (existing == null)
-    {
-        ShowError("Student not found!");
-        return;
-    }
+        var existing = _studentService.GetStudentById(id);
+        Console.WriteLine($"Current: {existing.FullName}");
 
-    Console.WriteLine("Enter new information:");
-    var updated = _studentService.GetStudentFormUser();
-    if (updated != null)
-    {
+        Console.WriteLine("Enter new information:");
+        var updated = _studentService.GetStudentFormUser();
         updated.ID = id;
         _studentService.UpdateStudent(updated);
+        Console.WriteLine("✅ Student updated successfully!");
+    }
+    catch (ValidationException ex)
+    {
+        ShowError($"Validation Error: {ex.Message}");
+    }
+    catch (NotFoundException ex)
+    {
+        ShowError($"Not Found: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Unexpected Error: {ex.Message}");
     }
     Wait();
 }
 
+// ========== STUDENT DELETE ==========
 void DeleteStudent()
 {
-    Console.Write("Enter Student ID: ");
-    if (Guid.TryParse(Console.ReadLine(), out Guid id))
+    try
+    {
+        Console.Write("Enter Student ID: ");
+        if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+        {
+            ShowError("Invalid GUID format!");
+            return;
+        }
+
         _studentService.DeleteStudentById(id);
-    else
-        ShowError("Invalid GUID!");
+        Console.WriteLine("✅ Student deleted successfully!");
+    }
+    catch (NotFoundException ex)
+    {
+        ShowError($"Not Found: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Error: {ex.Message}");
+    }
     Wait();
 }
 
+// ========== STUDENT COUNT BY CLASS ==========
+void GetStudentCountByClass()
+{
+    try
+    {
+        _studentService.GetStudentCountByClass();
+    }
+    catch (NotFoundException ex)
+    {
+        ShowError($"Not Found: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Error: {ex.Message}");
+    }
+    Wait();
+}
+
+// ============================================================
 // ========== TEACHER MENU ==========
+// ============================================================
 void TeacherMenu()
 {
     Console.Clear();
@@ -144,109 +215,173 @@ void TeacherMenu()
     }
 }
 
+// ========== TEACHER CREATE ==========
 void CreateTeacher()
 {
-    var teacher = _teacherService.GetTeachersFromUser();
-    if (teacher != null)
+    try
+    {
+        var teacher = _teacherService.GetTeachersFromUser();
         _teacherService.CreateTeacher(teacher);
+        Console.WriteLine("✅ Teacher created successfully!");
+    }
+    catch (ValidationException ex)
+    {
+        ShowError($"Validation Error: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Unexpected Error: {ex.Message}");
+    }
     Wait();
 }
 
+// ========== TEACHER READ ==========
 void ReadTeachers()
 {
-    var teachers = _teacherService.GetAllTeachers().Where(t => t != null).ToList();
-    if (!teachers.Any())
+    try
     {
-        Console.WriteLine("📭 No teachers found!");
-        Wait();
-        return;
-    }
+        var teachers = _teacherService.GetAllTeachers().Where(t => t != null).ToList();
+        if (!teachers.Any())
+        {
+            Console.WriteLine("📭 No teachers found!");
+            Wait();
+            return;
+        }
 
-    teachers.ForEach(_teacherService.TeacherPrintInfo);
-    Console.WriteLine($"\n📌 Total: {teachers.Count} teachers");
+        teachers.ForEach(_teacherService.TeacherPrintInfo);
+        Console.WriteLine($"\n📌 Total: {teachers.Count} teachers");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Error: {ex.Message}");
+    }
     Wait();
 }
 
+// ========== TEACHER UPDATE ==========
 void UpdateTeacher()
 {
-    Console.Write("Enter Teacher ID: ");
-    if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+    try
     {
-        ShowError("Invalid GUID!");
-        return;
-    }
+        Console.Write("Enter Teacher ID: ");
+        if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+        {
+            ShowError("Invalid GUID format!");
+            return;
+        }
 
-    var existing = _teacherService.GetTeacherById(id);
-    if (existing == null)
-    {
-        ShowError("Teacher not found!");
-        return;
-    }
+        var existing = _teacherService.GetTeacherById(id);
+        Console.WriteLine($"Current: {existing.FullName}");
 
-    Console.WriteLine("Enter new information:");
-    var updated = _teacherService.GetTeachersFromUser();
-    if (updated != null)
-    {
+        Console.WriteLine("Enter new information:");
+        var updated = _teacherService.GetTeachersFromUser();
         updated.Id = id;
         _teacherService.UpdateTeacher(updated);
+        Console.WriteLine("✅ Teacher updated successfully!");
+    }
+    catch (ValidationException ex)
+    {
+        ShowError($"Validation Error: {ex.Message}");
+    }
+    catch (NotFoundException ex)
+    {
+        ShowError($"Not Found: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Unexpected Error: {ex.Message}");
     }
     Wait();
 }
 
+// ========== TEACHER DELETE ==========
 void DeleteTeacher()
 {
-    Console.Write("Enter Teacher ID: ");
-    if (Guid.TryParse(Console.ReadLine(), out Guid id))
+    try
+    {
+        Console.Write("Enter Teacher ID: ");
+        if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+        {
+            ShowError("Invalid GUID format!");
+            return;
+        }
+
         _teacherService.DeleteTeacherById(id);
-    else
-        ShowError("Invalid GUID!");
+        Console.WriteLine("✅ Teacher deleted successfully!");
+    }
+    catch (NotFoundException ex)
+    {
+        ShowError($"Not Found: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Error: {ex.Message}");
+    }
     Wait();
 }
 
+// ============================================================
 // ========== GENERICS DEMO ==========
+// ============================================================
 void GenericsDemo()
 {
-    Console.Clear();
-    Console.WriteLine("📦 GENERICS DEMO");
-    Console.WriteLine("═══════════════════════════════════\n");
-
-    var pair = new Pair<int, string>(1, "Nodir");
-    var collection = new List<Pair<int, string>>
+    try
     {
-        pair,
-        new Pair<int, string>(2, "Akobir Davlatov")
-    };
-    collection.ForEach(p => p.Display());
+        Console.Clear();
+        Console.WriteLine("📦 GENERICS DEMO");
+        Console.WriteLine("═══════════════════════════════════\n");
 
-    var studentPair = new Pair<string, Student>("A", new Student());
-    Console.WriteLine($"\nStudent Pair: {studentPair.Key} -> {studentPair.Value?.FirstName ?? "null"}");
+        var pair = new Pair<int, string>(1, "Nodir");
+        var collection = new List<Pair<int, string>>
+        {
+            pair,
+            new Pair<int, string>(2, "Akobir Davlatov")
+        };
+        collection.ForEach(p => p.Display());
 
-    var stringBox = new Box<string>("ABCD");
-    var intBox = new Box<int>(123);
-    Console.WriteLine($"String Box: {stringBox.Value}");
-    Console.WriteLine($"Int Box: {intBox.Value}");
+        var studentPair = new Pair<string, Student>("A", new Student());
+        Console.WriteLine($"\nStudent Pair: {studentPair.Key} -> {studentPair.Value?.FirstName ?? "null"}");
 
-    string comName = "Apple";
-    comName.Print();
+        var stringBox = new Box<string>("ABCD");
+        var intBox = new Box<int>(123);
+        Console.WriteLine($"String Box: {stringBox.Value}");
+        Console.WriteLine($"Int Box: {intBox.Value}");
 
-    Console.WriteLine("\n✅ Generics demo completed!");
+        string comName = "Apple";
+        comName.Print();
+
+        Console.WriteLine("\n✅ Generics demo completed!");
+    }
+    catch (Exception ex)
+    {
+        ShowError($"Error in Generics Demo: {ex.Message}");
+    }
     Wait();
 }
 
+// ============================================================
 // ========== HELPERS ==========
+// ============================================================
+
+// ❌ Xatolikni qizil rangda chiqarish
 void ShowError(string message)
 {
-    Console.WriteLine($"❌ {message}");
-    Wait();
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine($"\n❌ {message}");
+    Console.ResetColor();
 }
 
+// ⏳ Foydalanuvchi tugma bosguncha kutish
 void Wait()
 {
     Console.WriteLine("\nPress any key to continue...");
     Console.ReadKey();
 }
 
+// ============================================================
 // ========== GENERICS CLASSES ==========
+// ============================================================
+
 public class Pair<TKey, TValue>
 {
     public TKey Key { get; set; }

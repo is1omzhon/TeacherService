@@ -1,143 +1,170 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Models.Teachers;
+using TeacherService.Exceptions;       
+using Models.Teachers;      
+using TeacherService.Repositories;        
 
-namespace Services.Teachers;
-
-public class TeacherServicee : ITeacherService
+namespace TeacherServiceApp.Services.Teachers
 {
-
-    private List<Teacher> teachers;
-    private const int MaxCapacity = 30;
-
-    public void CreateTeacher(Teacher teacher)
+    public class TeacherService : ITeacherService
     {
-        if (teachers.Count >= MaxCapacity)
+        private readonly ITeacherRepository _teacherRepository;
+
+        // ✅ KONSTRUKTOR
+        public TeacherService(ITeacherRepository teacherRepository)
         {
-            Console.WriteLine("Database is full!");
-            return;
+            _teacherRepository = teacherRepository ?? 
+                throw new ArgumentNullException(nameof(teacherRepository));
         }
 
-        teachers.Add(teacher);
-        Console.WriteLine("Teacher successfully created!");
-
-    }
-    public Teacher GetTeachersFromUser()
-    {
-        Console.WriteLine("=== NEW Teacher ===\n");
-
-        Console.Write("Enter GUID: ");
-        string input = Console.ReadLine();
-
-        if (Guid.TryParse(input, out Guid id))
+        // ========== CREATE ==========
+        public void CreateTeacher(Teacher teacher)
         {
-            Console.WriteLine($"✅ Valid GUID: {id}");
-        }
-        else
-        {
-            Console.WriteLine("❌ Invalid GUID format!");
-        }
+            if (teacher == null)
+                throw new ValidationException("Teacher cannot be null!");
 
-        Console.Write("FirstName: ");
-        string firstName = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(teacher.FirstName))
+                throw new ValidationException("First name cannot be empty!");
 
-        Console.Write("LastName: ");
-        string lastName = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(teacher.LastName))
+                throw new ValidationException("Last name cannot be empty!");
 
-        Console.Write("Subject: ");
-        string subject = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(teacher.Subject))
+                throw new ValidationException("Subject cannot be empty!");
 
-        Console.Write("Rank: ");
-        double rank = Convert.ToDouble(Console.ReadLine());
+            if (teacher.Salary < 0)
+                throw new ValidationException("Salary cannot be negative!");
 
+            teacher.Id = Guid.NewGuid();
+            teacher.CreatedAt = DateTime.UtcNow;
 
-
-        return new Teacher
-        {
-            Id = id,
-            FirstName = firstName,
-            LastName = lastName,
-            Subject = subject,
-            Rank = rank
-        };
-    }
-
-    public void TeacherPrintInfo(Teacher teacher)
-    {
-        if (teacher is null)
-        {
-            Console.WriteLine("Teacher is null");
+            _teacherRepository.Add(teacher);
         }
 
-        Console.WriteLine("==================");
-        Console.WriteLine(
-            $"""
-            Teacher Info:
-                ID: {teacher.Id},
-                FirstName: {teacher.FirstName},
-                LastName: {teacher.LastName},
-                Subject : {teacher.Subject}
-                Rank: {teacher.Rank}
-            """
-        );
-    }
-
-    public Teacher GetTeacherById(Guid teacherId)
-    {
-        foreach (Teacher teacher in this.teachers)
+        // ========== READ (All) ==========
+        public List<Teacher> GetAllTeachers()
         {
-            if (teacher?.Id == teacherId)
+            return _teacherRepository.GetAll();
+        }
+
+        // ========== READ (By ID) ==========
+        public Teacher GetTeacherById(Guid teacherId)
+        {
+            if (teacherId == Guid.Empty)
+                throw new ValidationException("Invalid teacher ID!");
+
+            var teacher = _teacherRepository.GetById(teacherId);
+
+            if (teacher == null)
+                throw new NotFoundException($"Teacher with ID '{teacherId}' not found!");
+
+            return teacher;
+        }
+
+        // ========== UPDATE ==========
+        public void UpdateTeacher(Teacher teacher)
+        {
+            if (teacher == null)
+                throw new ValidationException("Teacher cannot be null!");
+
+            if (string.IsNullOrWhiteSpace(teacher.FirstName))
+                throw new ValidationException("First name cannot be empty!");
+
+            if (string.IsNullOrWhiteSpace(teacher.LastName))
+                throw new ValidationException("Last name cannot be empty!");
+
+            if (string.IsNullOrWhiteSpace(teacher.Subject))
+                throw new ValidationException("Subject cannot be empty!");
+
+            if (teacher.Salary < 0)
+                throw new ValidationException("Salary cannot be negative!");
+
+            var existing = _teacherRepository.GetById(teacher.Id);
+
+            if (existing == null)
+                throw new NotFoundException($"Teacher with ID '{teacher.Id}' not found!");
+
+            existing.FirstName = teacher.FirstName;
+            existing.LastName = teacher.LastName;
+            existing.Subject = teacher.Subject;
+            existing.Salary = teacher.Salary;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            _teacherRepository.Update(existing);
+        }
+
+        // ========== DELETE ==========
+        public void DeleteTeacherById(Guid teacherId)
+        {
+            if (teacherId == Guid.Empty)
+                throw new ValidationException("Invalid teacher ID!");
+
+            var teacher = _teacherRepository.GetById(teacherId);
+
+            if (teacher == null)
+                throw new NotFoundException($"Teacher with ID '{teacherId}' not found!");
+
+            _teacherRepository.Delete(teacherId);
+        }
+
+        // ========== GET TEACHER FROM USER ==========
+        public Teacher GetTeachersFromUser()
+        {
+            Console.WriteLine("\n📝 === NEW TEACHER ===\n");
+
+            Console.Write("First Name: ");
+            string firstName = Console.ReadLine();
+
+            Console.Write("Last Name: ");
+            string lastName = Console.ReadLine();
+
+            Console.Write("Subject: ");
+            string subject = Console.ReadLine();
+
+            Console.Write("Salary: ");
+            if (!decimal.TryParse(Console.ReadLine(), out decimal salary))
             {
-                return teacher;
+                salary = 0;
             }
-        }
-        return null;
-    }
 
-    public void UpdateTeacher(Teacher teacher)
-    {
-        if (teacher is null)
-        {
-            Console.WriteLine("Student is null. Please, try with no nul student");
-            return;
-        }
+            // ✅ Validatsiya (Exception throw)
+            if (string.IsNullOrWhiteSpace(firstName))
+                throw new ValidationException("First name cannot be empty!");
 
-        foreach (Teacher storageTeacher in this.teachers)
-        {
-            if (storageTeacher.Id == teacher.Id)
+            if (string.IsNullOrWhiteSpace(lastName))
+                throw new ValidationException("Last name cannot be empty!");
+
+            if (string.IsNullOrWhiteSpace(subject))
+                throw new ValidationException("Subject cannot be empty!");
+
+            if (salary < 0)
+                throw new ValidationException("Salary cannot be negative!");
+
+            return new Teacher
             {
-                storageTeacher.FirstName = teacher.FirstName;
-                storageTeacher.LastName = teacher.LastName;
-                storageTeacher.Subject = teacher.Subject;
-                storageTeacher.Rank = teacher.Rank;
-                Console.WriteLine("Student is succesfully updated!!!");
-
-                return;
-            }
+                Id = Guid.NewGuid(),
+                FirstName = firstName,
+                LastName = lastName,
+                Subject = subject,
+                Salary = salary,
+                CreatedAt = DateTime.UtcNow
+            };
         }
 
-        Console.WriteLine("Student is not found!!!");
-    }
-
-    public void DeleteTeacherById(Guid teacherId)
-    {
-        Teacher maybeTeacher =
-            this.teachers.FirstOrDefault(teacher => teacher.Id == teacherId);
-
-        if (maybeTeacher is null)
+        // ========== PRINT TEACHER INFO ==========
+        public void TeacherPrintInfo(Teacher teacher)
         {
-            Console.WriteLine("Student is not found!");
-            return;
+            if (teacher == null)
+                throw new NotFoundException("Teacher is null!");
+
+            Console.WriteLine("═══════════════════════════════════");
+            Console.WriteLine($"🆔 ID:        {teacher.Id}");
+            Console.WriteLine($"👤 Name:      {teacher.FullName}");
+            Console.WriteLine($"📚 Subject:   {teacher.Subject}");
+            Console.WriteLine($"💰 Salary:    {teacher.Salary:C}");
+            Console.WriteLine($"📅 Created:   {teacher.CreatedAt:dd.MM.yyyy}");
+            Console.WriteLine("═══════════════════════════════════");
         }
-        this.teachers.Remove(maybeTeacher);
-    }
-
-    public void InsertTeacher(Teacher teacher) =>
-        this.teachers.Add(teacher);
-
-    public List<Teacher> GetAllTeachers()
-    {
-        return teachers.ToList();
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TeacherService.Exceptions;
 using Models.Students;
 using TeacherService.Repositories;
 
@@ -12,49 +13,77 @@ namespace TeacherServiceApp.Services.Students
 
         public StudentService(IStudentRepository studentRepository)
         {
-            _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
+            _studentRepository = studentRepository ?? 
+                throw new ArgumentNullException(nameof(studentRepository));
         }
 
-        // ========== 1. CREATE ==========
+        // ========== CREATE ==========
         public void CreateStudent(Student student)
         {
+            // 1. Student nullmi?
             if (student == null)
-                throw new ArgumentNullException(nameof(student));
+                throw new ValidationException("Student cannot be null!");
 
-            if (string.IsNullOrWhiteSpace(student.FirstName) && string.IsNullOrWhiteSpace(student.LastName))
-                throw new ArgumentException("Student nomi bo'sh bo'lishi mumkin emas!");
+            // 2. Ism null yoki bo'shmi?
+            if (string.IsNullOrWhiteSpace(student.FirstName))
+                throw new ValidationException("First name cannot be empty!");
+
+            if (string.IsNullOrWhiteSpace(student.LastName))
+                throw new ValidationException("Last name cannot be empty!");
+
+            // 3. GPA tekshirish
+            if (student.GPA < 0 || student.GPA > 5)
+                throw new ValidationException("GPA must be between 0 and 5!");
+
+            // 4. ClassRoom tekshirish
+            if (string.IsNullOrWhiteSpace(student.ClassRoom))
+                throw new ValidationException("Class room cannot be empty!");
 
             student.ID = Guid.NewGuid();
             student.CreatedAt = DateTime.UtcNow;
-            
+
             _studentRepository.Add(student);
-            Console.WriteLine($"✅ Student {student.FullName} created!");
         }
 
-        // ========== 2. READ (All) ==========
+        // ========== READ (All) ==========
         public List<Student> GetAllStudents()
         {
             return _studentRepository.GetAll();
         }
 
-        // ========== 3. READ (By ID) ==========
+        // ========== READ (By ID) ==========
         public Student GetStudentById(Guid studentId)
         {
             if (studentId == Guid.Empty)
-                throw new ArgumentException("Invalid Student ID!");
+                throw new ValidationException("Invalid student ID!");
 
-            return _studentRepository.GetById(studentId);
+            var student = _studentRepository.GetById(studentId);
+
+            if (student == null)
+                throw new NotFoundException($"Student with ID '{studentId}' not found!");
+
+            return student;
         }
 
-        // ========== 4. UPDATE ==========
+        // ========== UPDATE ==========
         public void UpdateStudent(Student student)
         {
             if (student == null)
-                throw new ArgumentNullException(nameof(student));
+                throw new ValidationException("Student cannot be null!");
+
+            if (string.IsNullOrWhiteSpace(student.FirstName))
+                throw new ValidationException("First name cannot be empty!");
+
+            if (string.IsNullOrWhiteSpace(student.LastName))
+                throw new ValidationException("Last name cannot be empty!");
+
+            if (student.GPA < 0 || student.GPA > 5)
+                throw new ValidationException("GPA must be between 0 and 5!");
 
             var existing = _studentRepository.GetById(student.ID);
+
             if (existing == null)
-                throw new Exception($"Student with ID {student.ID} not found!");
+                throw new NotFoundException($"Student with ID '{student.ID}' not found!");
 
             existing.FirstName = student.FirstName;
             existing.LastName = student.LastName;
@@ -64,24 +93,23 @@ namespace TeacherServiceApp.Services.Students
             existing.UpdatedAt = DateTime.UtcNow;
 
             _studentRepository.Update(existing);
-            Console.WriteLine($"✅ Student {existing.FullName} updated!");
         }
 
-        // ========== 5. DELETE ==========
+        // ========== DELETE ==========
         public void DeleteStudentById(Guid studentId)
         {
             if (studentId == Guid.Empty)
-                throw new ArgumentException("Invalid Student ID!");
+                throw new ValidationException("Invalid student ID!");
 
             var student = _studentRepository.GetById(studentId);
+
             if (student == null)
-                throw new Exception($"Student with ID {studentId} not found!");
+                throw new NotFoundException($"Student with ID '{studentId}' not found!");
 
             _studentRepository.Delete(studentId);
-            Console.WriteLine($"✅ Student {student.FullName} deleted!");
         }
 
-        // ========== 6. GET STUDENT FROM USER ==========
+        // ========== GET STUDENT FROM USER ==========
         public Student GetStudentFormUser()
         {
             Console.WriteLine("\n📝 === NEW STUDENT ===\n");
@@ -102,11 +130,21 @@ namespace TeacherServiceApp.Services.Students
             Console.Write("Class Room (e.g. 10A): ");
             string classRoom = Console.ReadLine();
 
+            // Validatsiya
+            if (string.IsNullOrWhiteSpace(firstName))
+                throw new ValidationException("First name cannot be empty!");
+
+            if (string.IsNullOrWhiteSpace(lastName))
+                throw new ValidationException("Last name cannot be empty!");
+
+            if (gpa < 0 || gpa > 5)
+                throw new ValidationException("GPA must be between 0 and 5!");
+
             return new Student
             {
                 ID = Guid.NewGuid(),
-                FirstName = firstName ?? "Unknown",
-                LastName = lastName ?? "Unknown",
+                FirstName = firstName,
+                LastName = lastName,
                 Address = address ?? "",
                 GPA = gpa,
                 ClassRoom = classRoom ?? "N/A",
@@ -114,11 +152,11 @@ namespace TeacherServiceApp.Services.Students
             };
         }
 
-        // ========== 7. SEARCH BY NAME ==========
+        // ========== SEARCH ==========
         public List<Student> GetStudentsByName(string name, int pageNumber, int pageSize)
         {
             if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Name cannot be empty!");
+                throw new ValidationException("Search name cannot be empty!");
 
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 10;
@@ -130,17 +168,14 @@ namespace TeacherServiceApp.Services.Students
                 .ToList();
         }
 
-        // ========== 8. PRINT STUDENT INFO ==========
+        // ========== PRINT ==========
         public void PrintStudentInfo(Student student)
         {
             if (student == null)
-            {
-                Console.WriteLine("❌ Student is null!");
-                return;
-            }
+                throw new NotFoundException("Student is null!");
 
             Console.WriteLine("═══════════════════════════════════");
-            Console.WriteLine($"🆔 ID:        {student.ID}");
+            Console.WriteLine($"🆔 ID:        {student.Id}");
             Console.WriteLine($"👤 Name:      {student.FullName}");
             Console.WriteLine($"📚 Class:     {student.ClassRoom}");
             Console.WriteLine($"📊 GPA:       {student.GPA:F2}");
@@ -149,16 +184,13 @@ namespace TeacherServiceApp.Services.Students
             Console.WriteLine("═══════════════════════════════════");
         }
 
-        // ========== 9. COUNT BY CLASS ==========
+        // ========== COUNT BY CLASS ==========
         public void GetStudentCountByClass()
         {
             var students = _studentRepository.GetAll();
 
             if (!students.Any())
-            {
-                Console.WriteLine("📭 No students found!");
-                return;
-            }
+                throw new NotFoundException("No students found!");
 
             var groups = students
                 .GroupBy(s => s.ClassRoom)
@@ -176,11 +208,13 @@ namespace TeacherServiceApp.Services.Students
             Console.WriteLine($"\n📌 Total: {students.Count} students");
         }
 
-        // ========== 10. STATISTICS ==========
+        // ========== STATISTICS ==========
         public double GetAverageGPA()
         {
             var students = _studentRepository.GetAll();
-            if (!students.Any()) return 0;
+            if (!students.Any())
+                throw new NotFoundException("No students to calculate average GPA!");
+
             return students.Average(s => s.GPA);
         }
 
