@@ -1,14 +1,12 @@
-using System;
 using System.Collections.Generic;
 using Models.Teachers;
 
-namespace TeacherService.Repositories;
-
-public interface ITeacherRepository
+namespace TeacherService.Repositories
 {
-    Teacher CreateTeacher(Teacher teacher);
-    List<Teacher> GetAllTeachers();
-    Teacher GetTeacherById(Guid teacherId);
-    Teacher UpdateTeacher(Teacher teacher);
-    Teacher DeleteTeacher(Teacher teacher);
+    public interface ITeacherRepository : IGenericRepository<Teacher>
+    {
+        List<Teacher> Search(string searchTerm);
+        List<Teacher> GetBySubject(string subject);
+        List<Teacher> GetTopTeachers(int count);
+    }
 }

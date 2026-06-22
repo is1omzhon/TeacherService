@@ -5,7 +5,7 @@ using Models.Teachers;
 
 namespace Services.Teachers;
 
-public class TeacherService : ITeacherService
+public class TeacherServicee : ITeacherService
 {
 
     private List<Teacher> teachers;

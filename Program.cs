@@ -1,255 +1,276 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
-using Models.Students;
+using System.Linq;
+using Models.Students; 
 using Models.Teachers;
+using TeacherService.Repositories;                  
 using Services.Students;
 using Services.Teachers;
 
+// ========== DEPENDENCY INJECTION ==========
+StudentRepository _studentRepo = new StudentRepository();
+TeacherRepository _teacherRepo = new TeacherRepository();
 
-// StudentService studentService = new StudentService();
-// TeacherService teacherService = new TeacherService();
+StudentService _studentService = new StudentService(_studentRepo);
+TeacherServicee _teacherService = new TeacherServicee();
 
-// string userChoice = string.Empty;
+while (true)
+{
+    Console.Clear();
+    Console.WriteLine("🏫 SCHOOL MANAGEMENT SYSTEM");
+    Console.WriteLine("═══════════════════════════════════");
+    Console.WriteLine("1. Student");
+    Console.WriteLine("2. Teacher");
+    Console.WriteLine("3. Generics Demo");
+    Console.WriteLine("4. Exit");
+    Console.Write("\n👉 Tanlang: ");
 
-// do
-// {
-//     Console.WriteLine("\nSchool Management System ga xush kelibsiz! \n\t1. Student \n\t2. Teacher");
-//     Console.Write("Tanlang: ");
+    switch (Console.ReadLine())
+    {
+        case "1": StudentMenu(); break;
+        case "2": TeacherMenu(); break;
+        case "3": GenericsDemo(); break;
+        case "4": return;
+        default: ShowError("Noto'g'ri tanlov!"); break;
+    }
+}
 
-//     string userInput = Console.ReadLine();
+// ========== STUDENT MENU ==========
+void StudentMenu()
+{
+    Console.Clear();
+    Console.WriteLine("📚 STUDENT MANAGEMENT");
+    Console.WriteLine("═══════════════════════════════════");
+    Console.WriteLine("1. CREATE");
+    Console.WriteLine("2. READ");
+    Console.WriteLine("3. UPDATE");
+    Console.WriteLine("4. DELETE");
+    Console.WriteLine("5. COUNT BY CLASS");
+    Console.WriteLine("6. BACK");
+    Console.Write("\n👉 Tanlang: ");
 
-//     switch (userInput)
-//     {
-//         case "1":
-//             {
-//                 Console.WriteLine("\nStudent bo'limi \n\t1. CREATE (Qo'shish) \n\t2. READ (Ko'rish)  \n\t3. UPDATE (Yangilash)  \n\t4. DELETE (O'chirish) ");
-//                 Console.Write("Tanlang: ");
+    switch (Console.ReadLine())
+    {
+        case "1": CreateStudent(); break;
+        case "2": ReadStudents(); break;
+        case "3": UpdateStudent(); break;
+        case "4": DeleteStudent(); break;
+        case "5": _studentService.GetStudentCountByClass(); Wait(); break;
+        case "6": return;
+        default: ShowError("Noto'g'ri tanlov!"); break;
+    }
+}
 
-//                 string choiceFunction = Console.ReadLine();
+void CreateStudent()
+{
+    var student = _studentService.GetStudentFormUser();
+    if (student != null)
+        _studentService.CreateStudent(student);
+    Wait();
+}
 
-//                 switch (choiceFunction.ToLower())
-//                 {
-//                     case "1":
-//                         Student newStudent = studentService.GetStudentFormUser();
-//                         if (newStudent != null)
-//                         {
-//                             studentService.CreateStudent(newStudent);
-//                         }
-//                         break;
+void ReadStudents()
+{
+    var students = _studentService.GetAllStudents();
+    if (!students.Any())
+    {
+        Console.WriteLine("📭 No students found!");
+        Wait();
+        return;
+    }
 
-//                     case "2":
-//                         List<Student> allStudents = studentService.GetAllStudents();
-//                         if (allStudents.Count == 0)
-//                         {
-//                             Console.WriteLine("📭 No students found!");
-//                         }
-//                         else
-//                         {
-//                             foreach (var student in allStudents)
-//                             {
-//                                 if (student != null)
-//                                 {
-//                                     studentService.PrintStudentInfo(student);
-//                                 }
-//                             }
-//                             Console.WriteLine($"\n📌 Total: {allStudents.Count} students");
-//                         }
-//                         break;
+    students.ForEach(_studentService.PrintStudentInfo);
+    Console.WriteLine($"\n📌 Total: {students.Count} students");
+    Wait();
+}
 
-//                     case "3":
-//                         Console.Write("Enter Student ID to update: ");
-//                         if (Guid.TryParse(Console.ReadLine(), out Guid updateId))
-//                         {
-//                             Student exStudent = studentService.GetStudentById(updateId);
-//                             if (exStudent != null)
-//                             {
-//                                 Console.WriteLine("Enter new information:");
-//                                 Student updatedStudent = studentService.GetStudentFormUser();
-//                                 if (updatedStudent != null)
-//                                 {
-//                                     updatedStudent.ID = updateId;
-//                                     studentService.UpdateStudent(updatedStudent);
-//                                 }
-//                             }
-//                             else
-//                             {
-//                                 Console.WriteLine("Student not found!");
-//                             }
-//                         }
-//                         else
-//                         {
-//                             Console.WriteLine("Invalid GUID format!");
-//                         }
-//                         break;
+void UpdateStudent()
+{
+    Console.Write("Enter Student ID: ");
+    if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+    {
+        ShowError("Invalid GUID!");
+        return;
+    }
 
-//                     case "4":
-//                         Console.Write("Enter Student ID to delete: ");
-//                         if (Guid.TryParse(Console.ReadLine(), out Guid deleteId))
-//                         {
-//                             studentService.DeleteStudentById(deleteId);
-//                         }
-//                         else
-//                         {
-//                             Console.WriteLine("Invalid GUID format!");
-//                         }
-//                         break;
-//                     case "5":
-//                         {
-//                             studentService.GetStudentCountByClass();
-//                             break;
-//                         }
+    var existing = _studentService.GetStudentById(id);
+    if (existing == null)
+    {
+        ShowError("Student not found!");
+        return;
+    }
 
+    Console.WriteLine("Enter new information:");
+    var updated = _studentService.GetStudentFormUser();
+    if (updated != null)
+    {
+        updated.ID = id;
+        _studentService.UpdateStudent(updated);
+    }
+    Wait();
+}
 
-//                     default:
-//                         Console.WriteLine(" Bunday amal mavjud emas!");
-//                         break;
-//                 }
-//             }
-//             break;
+void DeleteStudent()
+{
+    Console.Write("Enter Student ID: ");
+    if (Guid.TryParse(Console.ReadLine(), out Guid id))
+        _studentService.DeleteStudentById(id);
+    else
+        ShowError("Invalid GUID!");
+    Wait();
+}
 
-//         case "2":
-//             {
-//                 Console.WriteLine("\nTeacher bo'limi \n\t1. CREATE (Qo'shish) \n\t2. READ (Ko'rish)  \n\t3. UPDATE (Yangilash) \n\t4. DELETE (O'chirish)");
-//                 Console.Write("Tanlang: ");
+// ========== TEACHER MENU ==========
+void TeacherMenu()
+{
+    Console.Clear();
+    Console.WriteLine("👨‍🏫 TEACHER MANAGEMENT");
+    Console.WriteLine("═══════════════════════════════════");
+    Console.WriteLine("1. CREATE");
+    Console.WriteLine("2. READ");
+    Console.WriteLine("3. UPDATE");
+    Console.WriteLine("4. DELETE");
+    Console.WriteLine("5. BACK");
+    Console.Write("\n👉 Tanlang: ");
 
-//                 string choiceFunction = Console.ReadLine();
+    switch (Console.ReadLine())
+    {
+        case "1": CreateTeacher(); break;
+        case "2": ReadTeachers(); break;
+        case "3": UpdateTeacher(); break;
+        case "4": DeleteTeacher(); break;
+        case "5": return;
+        default: ShowError("Noto'g'ri tanlov!"); break;
+    }
+}
 
-//                 switch (choiceFunction.ToLower())
-//                 {
-//                     case "1":
-//                         Teacher newTeacher = teacherService.GetTeachersFromUser();
-//                         if (newTeacher != null)
-//                         {
-//                             teacherService.CreateTeacher(newTeacher);
-//                         }
-//                         break;
+void CreateTeacher()
+{
+    var teacher = _teacherService.GetTeachersFromUser();
+    if (teacher != null)
+        _teacherService.CreateTeacher(teacher);
+    Wait();
+}
 
-//                     case "2":
-//                         Teacher[] allTeachers = teacherService.GetAllTeachers();
-//                         foreach (var teacher in allTeachers)
-//                         {
-//                             if (teacher != null)
-//                             {
-//                                 teacherService.TeacherPrintInfo(teacher);
-//                             }
-//                         }
-//                         break;
+void ReadTeachers()
+{
+    var teachers = _teacherService.GetAllTeachers().Where(t => t != null).ToList();
+    if (!teachers.Any())
+    {
+        Console.WriteLine("📭 No teachers found!");
+        Wait();
+        return;
+    }
 
-//                     case "3":
-//                         Console.Write("Enter Teacher ID to update: ");
-//                         if (Guid.TryParse(Console.ReadLine(), out Guid updateTeacherId))
-//                         {
-//                             Teacher exTeacher = teacherService.GetTeacherById(updateTeacherId);
-//                             if (exTeacher != null)
-//                             {
-//                                 Console.WriteLine("Enter new information:");
-//                                 Teacher updatedTeacher = teacherService.GetTeachersFromUser();
-//                                 if (updatedTeacher != null)
-//                                 {
-//                                     updatedTeacher.Id = updateTeacherId;
-//                                     teacherService.UpdateTeacher(updatedTeacher);
-//                                 }
-//                             }
-//                             else
-//                             {
-//                                 Console.WriteLine("Teacher not found!");
-//                             }
-//                         }
-//                         else
-//                         {
-//                             Console.WriteLine("Invalid GUID format!");
-//                         }
-//                         break;
+    teachers.ForEach(_teacherService.TeacherPrintInfo);
+    Console.WriteLine($"\n📌 Total: {teachers.Count} teachers");
+    Wait();
+}
 
-//                     case "4":
-//                         Console.Write("Enter Teacher ID to delete: ");
-//                         if (Guid.TryParse(Console.ReadLine(), out Guid deleteTeacherId))
-//                         {
-//                             teacherService.DeleteTeacherById(deleteTeacherId);
-//                         }
-//                         else
-//                         {
-//                             Console.WriteLine("Invalid GUID format!");
-//                         }
-//                         break;
+void UpdateTeacher()
+{
+    Console.Write("Enter Teacher ID: ");
+    if (!Guid.TryParse(Console.ReadLine(), out Guid id))
+    {
+        ShowError("Invalid GUID!");
+        return;
+    }
 
-//                     default:
-//                         Console.WriteLine("Bunday amal mavjud emas!");
-//                         break;
-//                 }
-//             }
-//             break;
+    var existing = _teacherService.GetTeacherById(id);
+    if (existing == null)
+    {
+        ShowError("Teacher not found!");
+        return;
+    }
 
-//         default:
-//             Console.WriteLine("Bunday amal mavjud emas!");
-//             break;
-//     }
-//     Console.Write("\nDasturni davom ettirishni xohlaysizmi? (ha/yoq): ");
-//     userChoice = Console.ReadLine();
+    Console.WriteLine("Enter new information:");
+    var updated = _teacherService.GetTeachersFromUser();
+    if (updated != null)
+    {
+        updated.Id = id;
+        _teacherService.UpdateTeacher(updated);
+    }
+    Wait();
+}
 
-// } while (userChoice.ToLower() == "ha");
+void DeleteTeacher()
+{
+    Console.Write("Enter Teacher ID: ");
+    if (Guid.TryParse(Console.ReadLine(), out Guid id))
+        _teacherService.DeleteTeacherById(id);
+    else
+        ShowError("Invalid GUID!");
+    Wait();
+}
 
-// var pair = new Pair<int, string> (1, "Nodir");
+// ========== GENERICS DEMO ==========
+void GenericsDemo()
+{
+    Console.Clear();
+    Console.WriteLine("📦 GENERICS DEMO");
+    Console.WriteLine("═══════════════════════════════════\n");
 
-// var collection = new List<Pair<int, string>>();
-// collection.Add(pair);
-// collection.Add(new Pair<int, string> (2 , "Akobir davlatov"));
+    var pair = new Pair<int, string>(1, "Nodir");
+    var collection = new List<Pair<int, string>>
+    {
+        pair,
+        new Pair<int, string>(2, "Akobir Davlatov")
+    };
+    collection.ForEach(p => p.Display());
 
-// collection.ForEach(pair => pair.Display());
+    var studentPair = new Pair<string, Student>("A", new Student());
+    Console.WriteLine($"\nStudent Pair: {studentPair.Key} -> {studentPair.Value?.FirstName ?? "null"}");
 
-// var studentPair = new Pair<string, Student>("A", new Student());
+    var stringBox = new Box<string>("ABCD");
+    var intBox = new Box<int>(123);
+    Console.WriteLine($"String Box: {stringBox.Value}");
+    Console.WriteLine($"Int Box: {intBox.Value}");
 
-// // StringBox strBox = new StringBox();
-// // strBox.Value = "Test";
+    string comName = "Apple";
+    comName.Print();
 
-// // IntBox intBox = new IntBox();
-// // {
-// //     Value = 10;
-// // };
+    Console.WriteLine("\n✅ Generics demo completed!");
+    Wait();
+}
 
-// var stringBox = new Box<string>("ABCD");
-// var intBox = new Box<int>(123);
+// ========== HELPERS ==========
+void ShowError(string message)
+{
+    Console.WriteLine($"❌ {message}");
+    Wait();
+}
 
-string comName  = "Apple";
-comName.Print();
+void Wait()
+{
+    Console.WriteLine("\nPress any key to continue...");
+    Console.ReadKey();
+}
 
-
-
+// ========== GENERICS CLASSES ==========
 public class Pair<TKey, TValue>
 {
-    public TKey Key {get;set;}
-    public TValue Value {get; set;} 
+    public TKey Key { get; set; }
+    public TValue Value { get; set; }
 
     public Pair(TKey key, TValue value)
     {
-        this.Key = key;
-        this.Value = value;  
+        Key = key;
+        Value = value;
     }
 
     public void Display()
     {
-        Console.WriteLine($" Key : {this.Key} Value: {this.Value}");
+        Console.WriteLine($"Key: {Key}, Value: {Value}");
     }
-}
-
-public class StringBox
-{
-    public string Value {get; set;}
-}
-
-public class IntBox
-{
-    public int Value {get; set;}
 }
 
 public class Box<T>
 {
-    public T Value {get; set;}
+    public T Value { get; set; }
 
     public Box(T value)
     {
-        this.Value = value;
+        Value = value;
     }
 }
 
@@ -260,5 +281,3 @@ public static class PrintExtension
         Console.WriteLine(value);
     }
 }
-
-

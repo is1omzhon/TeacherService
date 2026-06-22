@@ -1,14 +1,14 @@
-using System;
 using System.Collections.Generic;
-using Models.Students;
+ using Models.Students;
 
-namespace TeacherService.Repositories;
-
-public interface IStudentRepository
+namespace TeacherService.Repositories
 {
-    Student CreateStudent(Student student);
-    List<Student> GetAllStudents();
-    Student GetStudentById(Guid studentId);
-    Student UpdateStudent(Student student);
-    Student DeleteStudent(Student student);
+    public interface IStudentRepository : IGenericRepository<Student>
+    {
+        List<Student> Search(string searchTerm);
+        List<Student> GetByClass(string className);
+        List<Student> GetByGPA(double minGPA);
+        Dictionary<string, int> GetStudentsCountByClass();
+        double AverageGPA { get; }
+    }
 }

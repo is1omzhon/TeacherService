@@ -4,9 +4,11 @@ namespace Models.Teachers;
 
 public class Teacher
 {
-    public Guid Id {get; set;}
-    public string FirstName{get; set;}
-    public string LastName {get; set;}
-    public string Subject {get; set;}
-    public double Rank {get; set;}
+    public Guid Id { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string Subject { get; set; }
+    public double Rank { get; set; }
+    public decimal Salary { get; set; }        
+    public int Experience { get; set; }
 }

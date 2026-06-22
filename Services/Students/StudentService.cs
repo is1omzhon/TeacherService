@@ -4,177 +4,189 @@ using System.Linq;
 using Models.Students;
 using TeacherService.Repositories;
 
-namespace Services.Students;
-
-public class StudentService : IStudentService
+namespace TeacherServiceApp.Services.Students
 {
-    private readonly IStudentRepository _studentRepository;
-    
-    public StudentService(IStudentRepository studentRepository)
+    public class StudentService : IStudentService
     {
-        _studentRepository = studentRepository;
-    }
-    
-    // 1. Student yaratish
-    public void CreateStudent(Student student)
-    {
-        if (student == null)
+        private readonly IStudentRepository _studentRepository;
+
+        public StudentService(IStudentRepository studentRepository)
         {
-            throw new ArgumentNullException(nameof(student), "Student null bo'lishi mumkin emas");
+            _studentRepository = studentRepository ?? throw new ArgumentNullException(nameof(studentRepository));
         }
-        
-        if (string.IsNullOrWhiteSpace(student.FullName))
+
+        // ========== 1. CREATE ==========
+        public void CreateStudent(Student student)
         {
-            throw new ArgumentException("Student ismi bo'sh bo'lishi mumkin emas");
+            if (student == null)
+                throw new ArgumentNullException(nameof(student));
+
+            if (string.IsNullOrWhiteSpace(student.FirstName) && string.IsNullOrWhiteSpace(student.LastName))
+                throw new ArgumentException("Student nomi bo'sh bo'lishi mumkin emas!");
+
+            student.ID = Guid.NewGuid();
+            student.CreatedAt = DateTime.UtcNow;
+            
+            _studentRepository.Add(student);
+            Console.WriteLine($"✅ Student {student.FullName} created!");
         }
-        
-        _studentRepository.CreateStudent(student);
-    }
-    
-    // 2. Barcha studentlarni olish
-    public List<Student> GetAllStudents()
-    {
-        return _studentRepository.GetAllStudents();
-    }
-    
-    // 3. ID bo'yicha student olish
-    public Student GetStudentById(Guid studentId)
-    {
-        if (studentId == Guid.Empty)
+
+        // ========== 2. READ (All) ==========
+        public List<Student> GetAllStudents()
         {
-            throw new ArgumentException("Student ID noto'g'ri");
+            return _studentRepository.GetAll();
         }
-        
-        return _studentRepository.GetStudentById(studentId);
-    }
-    
-    // 4. Studentni yangilash
-    public void UpdateStudent(Student student)
-    {
-        if (student == null)
+
+        // ========== 3. READ (By ID) ==========
+        public Student GetStudentById(Guid studentId)
         {
-            throw new ArgumentNullException(nameof(student));
+            if (studentId == Guid.Empty)
+                throw new ArgumentException("Invalid Student ID!");
+
+            return _studentRepository.GetById(studentId);
         }
-        
-        var existingStudent = _studentRepository.GetStudentById(student.Id);
-        if (existingStudent == null)
+
+        // ========== 4. UPDATE ==========
+        public void UpdateStudent(Student student)
         {
-            throw new Exception($"ID {student.Id} bo'lgan student topilmadi");
+            if (student == null)
+                throw new ArgumentNullException(nameof(student));
+
+            var existing = _studentRepository.GetById(student.ID);
+            if (existing == null)
+                throw new Exception($"Student with ID {student.ID} not found!");
+
+            existing.FirstName = student.FirstName;
+            existing.LastName = student.LastName;
+            existing.Address = student.Address;
+            existing.GPA = student.GPA;
+            existing.ClassRoom = student.ClassRoom;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            _studentRepository.Update(existing);
+            Console.WriteLine($"✅ Student {existing.FullName} updated!");
         }
-        
-        _studentRepository.UpdateStudent(student);
-    }
-    
-    // 5. ID bo'yicha student o'chirish
-    public void DeleteStudentById(Guid studentId)
-    {
-        if (studentId == Guid.Empty)
+
+        // ========== 5. DELETE ==========
+        public void DeleteStudentById(Guid studentId)
         {
-            throw new ArgumentException("Student ID noto'g'ri");
+            if (studentId == Guid.Empty)
+                throw new ArgumentException("Invalid Student ID!");
+
+            var student = _studentRepository.GetById(studentId);
+            if (student == null)
+                throw new Exception($"Student with ID {studentId} not found!");
+
+            _studentRepository.Delete(studentId);
+            Console.WriteLine($"✅ Student {student.FullName} deleted!");
         }
-        
-        var student = _studentRepository.GetStudentById(studentId);
-        if (student == null)
+
+        // ========== 6. GET STUDENT FROM USER ==========
+        public Student GetStudentFormUser()
         {
-            throw new Exception($"ID {studentId} bo'lgan student topilmadi");
+            Console.WriteLine("\n📝 === NEW STUDENT ===\n");
+
+            Console.Write("First Name: ");
+            string firstName = Console.ReadLine();
+
+            Console.Write("Last Name: ");
+            string lastName = Console.ReadLine();
+
+            Console.Write("Address: ");
+            string address = Console.ReadLine();
+
+            Console.Write("GPA (0-5): ");
+            if (!double.TryParse(Console.ReadLine(), out double gpa))
+                gpa = 0;
+
+            Console.Write("Class Room (e.g. 10A): ");
+            string classRoom = Console.ReadLine();
+
+            return new Student
+            {
+                ID = Guid.NewGuid(),
+                FirstName = firstName ?? "Unknown",
+                LastName = lastName ?? "Unknown",
+                Address = address ?? "",
+                GPA = gpa,
+                ClassRoom = classRoom ?? "N/A",
+                CreatedAt = DateTime.UtcNow
+            };
         }
-        
-        _studentRepository.DeleteStudent(student);
-    }
-    
-    // 6. Foydalanuvchidan student ma'lumotlarini olish
-    public Student GetStudentFormUser()
-    {
-        Console.WriteLine("=== Yangi student qo'shish ===");
-        
-        Console.Write("Ism familiya: ");
-        string? fullName = Console.ReadLine();
-        
-        Console.Write("Sinf (1-11): ");
-        if (!int.TryParse(Console.ReadLine(), out int grade))
+
+        // ========== 7. SEARCH BY NAME ==========
+        public List<Student> GetStudentsByName(string name, int pageNumber, int pageSize)
         {
-            grade = 1;
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name cannot be empty!");
+
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            return _studentRepository.GetAll()
+                .Where(s => s.FullName.Contains(name, StringComparison.OrdinalIgnoreCase))
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
         }
-        
-        Console.Write("Yoshi: ");
-        if (!int.TryParse(Console.ReadLine(), out int age))
+
+        // ========== 8. PRINT STUDENT INFO ==========
+        public void PrintStudentInfo(Student student)
         {
-            age = 7;
+            if (student == null)
+            {
+                Console.WriteLine("❌ Student is null!");
+                return;
+            }
+
+            Console.WriteLine("═══════════════════════════════════");
+            Console.WriteLine($"🆔 ID:        {student.ID}");
+            Console.WriteLine($"👤 Name:      {student.FullName}");
+            Console.WriteLine($"📚 Class:     {student.ClassRoom}");
+            Console.WriteLine($"📊 GPA:       {student.GPA:F2}");
+            Console.WriteLine($"📍 Address:   {student.Address}");
+            Console.WriteLine($"📅 Created:   {student.CreatedAt:dd.MM.yyyy}");
+            Console.WriteLine("═══════════════════════════════════");
         }
-        
-        var student = new Student
+
+        // ========== 9. COUNT BY CLASS ==========
+        public void GetStudentCountByClass()
         {
-            Id = Guid.NewGuid(),
-            FullName = fullName ?? "Noma'lum",
-            Grade = grade,
-            Age = age
-        };
-        
-        return student;
-    }
-    
-    // 7. Nom bo'yicha studentlarni qidirish (pagination bilan)
-    public List<Student> GetStudentsByName(string name, int pageNumber, int pageSize)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            throw new ArgumentException("Ism bo'sh bo'lishi mumkin emas");
+            var students = _studentRepository.GetAll();
+
+            if (!students.Any())
+            {
+                Console.WriteLine("📭 No students found!");
+                return;
+            }
+
+            var groups = students
+                .GroupBy(s => s.ClassRoom)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            Console.WriteLine("\n📊 STUDENT COUNT BY CLASS:");
+            Console.WriteLine("═══════════════════════════════════");
+
+            foreach (var group in groups)
+            {
+                Console.WriteLine($"📚 {group.Key}: {group.Count()} students");
+            }
+
+            Console.WriteLine($"\n📌 Total: {students.Count} students");
         }
-        
-        if (pageNumber < 1) pageNumber = 1;
-        if (pageSize < 1) pageSize = 10;
-        
-        var allStudents = _studentRepository.GetAllStudents();
-        
-        var filteredStudents = allStudents
-            .Where(s => s.FullName.Contains(name, StringComparison.OrdinalIgnoreCase))
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-        
-        return filteredStudents;
-    }
-    
-    // 8. Student ma'lumotlarini ekranga chiqarish
-    public void PrintStudentInfo(Student student)
-    {
-        if (student == null)
+
+        // ========== 10. STATISTICS ==========
+        public double GetAverageGPA()
         {
-            Console.WriteLine("Student ma'lumotlari topilmadi");
-            return;
+            var students = _studentRepository.GetAll();
+            if (!students.Any()) return 0;
+            return students.Average(s => s.GPA);
         }
-        
-        Console.WriteLine("═══════════════════════════════════");
-        Console.WriteLine($"🆔 ID:        {student.Id}");
-        Console.WriteLine($"👤 Ism:       {student.FullName}");
-        Console.WriteLine($"📚 Sinf:      {student.Grade}-sinf");
-        Console.WriteLine($"🎂 Yoshi:     {student.Age}");
-        Console.WriteLine("═══════════════════════════════════");
-    }
-    
-    // 9. Studentlar sonini sinf bo'yicha chiqarish
-    public void GetStudentCountByClass()
-    {
-        var allStudents = _studentRepository.GetAllStudents();
-        
-        var studentsByGrade = allStudents
-            .GroupBy(s => s.Grade)
-            .OrderBy(g => g.Key)
-            .ToList();
-        
-        Console.WriteLine("\n=== Sinf bo'yicha o'quvchilar soni ===");
-        
-        if (studentsByGrade.Count == 0)
+
+        public int GetTotalCount()
         {
-            Console.WriteLine("Hech qanday student topilmadi");
-            return;
+            return _studentRepository.GetAll().Count;
         }
-        
-        foreach (var group in studentsByGrade)
-        {
-            Console.WriteLine($"{group.Key}-sinf: {group.Count()} ta o'quvchi");
-        }
-        
-        Console.WriteLine($"\nJami studentlar: {allStudents.Count} ta");
     }
 }

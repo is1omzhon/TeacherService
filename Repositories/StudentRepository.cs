@@ -3,43 +3,52 @@ using System.Collections.Generic;
 using System.Linq;
 using Models.Students;
 
-namespace TeacherService.Repositories;
-
-public class StudentRepository : IStudentRepository
+namespace TeacherService.Repositories
 {
-    public List<Student> students;
-
-    public StudentRepository()
+    public class StudentRepository : GenericRepository<Student>, IStudentRepository
     {
-        this.students = new List<Student>();
-    }
+        public StudentRepository() : base("students.json") { }
 
-    public Student CreateStudent(Student student)
-    {
-        this.students.Add(student);
+        protected override Guid GetEntityId(Student entity) => entity.Id;
 
-        return student;
-    }
+        public List<Student> Search(string searchTerm)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+                return GetAll();
 
-    public Student DeleteStudent(Student student)
-    {
-        this.students.Remove(student);
-        return student;
-    }
+            return _items.Values
+                .Where(s => s.FirstName.Contains(searchTerm) ||
+                           s.LastName.Contains(searchTerm) ||
+                           s.ClassRoom.Contains(searchTerm))
+                .ToList();
+        }
 
+        public List<Student> GetByClass(string className)
+        {
+            return _items.Values.Where(s => s.ClassRoom == className).ToList();
+        }
 
-    public List<Student> GetAllStudents()
-    {
-        return this.students;
-    }
+        public List<Student> GetByGPA(double minGPA)
+        {
+            return _items.Values.Where(s => s.GPA >= minGPA)
+                           .OrderByDescending(s => s.GPA)
+                           .ToList();
+        }
 
-    public Student GetStudentById(Guid studentId)
-    {
-        return this.students.FirstOrDefault(s => s.ID == studentId);
-    }
+        public Dictionary<string, int> GetStudentsCountByClass()
+        {
+            return _items.Values
+                .GroupBy(s => s.ClassRoom)
+                .ToDictionary(g => g.Key, g => g.Count());
+        }
 
-    public Student UpdateStudent(Student student)
-    {
-        throw new NotImplementedException();
+        public double AverageGPA
+        {
+            get
+            {
+                if (_items.Count == 0) return 0;
+                return _items.Values.Average(s => s.GPA);
+            }
+        }
     }
 }
